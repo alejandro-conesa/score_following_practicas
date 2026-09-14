@@ -1,0 +1,15 @@
+# Mapeo: etiqueta_en_nombre_archivo <TAB> soundfont <TAB> banco <TAB> programa
+# - "etiqueta_en_nombre_archivo" es el texto que buscará (substring, sensible a mayúsculas)
+#   dentro del nombre del .midi para decidir qué instrumento tuyo usar.
+# - "soundfont" debe coincidir EXACTAMENTE (mismo texto) con uno de los que pases en -s.
+# - "banco" y "programa" son los números MIDI (Bank Select / Program Change) de ESE
+#   instrumento dentro de tu .sf2. Para averiguarlos:
+#     fluidsynth soundfont1.sf2
+#     > inst 1
+#   (el "1" es el id del soundfont; te lista instrumentos con su banco:programa)
+#
+# Rellena con tus 3 instrumentos reales. Ejemplo (BORRA/edita estas líneas):
+YamahaGrandPiano	soundfonts/FluidR3_GM.sf2	0	0
+ElectricPiano	soundfonts/FluidR3_GM.sf2	0	2
+acoustic_piano_imis_1	soundfonts/acoustic_grand_piano.sf2	0	0
+

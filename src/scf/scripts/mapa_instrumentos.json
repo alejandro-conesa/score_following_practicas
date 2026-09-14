@@ -1,0 +1,20 @@
+[
+  {
+    "etiqueta": "YamahaGrandPiano",
+    "soundfont": "FluidR3_GM.sf2",
+    "banco": 0,
+    "programa": 0
+  },
+  {
+    "etiqueta": "ElectricPiano",
+    "soundfont": "FluidR3_GM.sf2",
+    "banco": 0,
+    "programa": 2
+  },
+  {
+    "etiqueta": "AcousticGrandPiano",
+    "soundfont": "acoustic_grand_piano.sf2",
+    "banco": 0,
+    "programa": 0
+  }
+]
