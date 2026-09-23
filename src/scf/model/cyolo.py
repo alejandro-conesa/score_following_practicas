@@ -25,11 +25,21 @@ class FocusBlock(torch.nn.Module):
         x = self.activation(x)
         return x
 
+
 class FiLM(torch.nn.Module):
     def __init__(self, in_channels, out_channels, zdim=128): # la dimensión del vector z siempre es 128 a la entrada
         super().__init__()
         # gamma y beta para la film son capas nn.linear. mirar repo cyolo paper para dimensiones.
+        self.gamma = torch.nn.Linear(zdim, out_channels)
+        self.beta = torch.nn.Linear(zdim, out_channels)
 
+    def forward(self, x, z):
+        gamma = self.gamma(z).unsqueeze(-1).unsqueeze(-1)
+        beta = self.beta(z).unsqueeze(-1).unsqueeze(-1)
+
+        x = gamma * x + beta
+
+        return x
 
 
 class BottleneckBlock(torch.nn.Module):
@@ -76,7 +86,6 @@ class BottleneckBlock(torch.nn.Module):
         out = self.activation(out)
         return out
         
-
 
 class UpscaleBlock(torch.nn.Module):
     def __init__(self, in_channels, out_channels, out_dim, film_active=False):
@@ -125,9 +134,6 @@ class DownscaleBlock(torch.nn.Module):
         x = self.activation(x)
         x = self.bottleneck(x)
         return x
-
-    
-
 
 
 class cyoloSCF(torch.nn.Module):
