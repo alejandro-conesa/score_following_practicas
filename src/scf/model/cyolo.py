@@ -1,4 +1,5 @@
 import torch
+from scf.model.spectrogram_cnn import CRNNSpectrogram
 
 class Focus(torch.nn.Module):
     def forward(self, x):
@@ -27,7 +28,7 @@ class FocusBlock(torch.nn.Module):
 
 
 class FiLM(torch.nn.Module):
-    def __init__(self, in_channels, out_channels, zdim=128): # la dimensión del vector z siempre es 128 a la entrada
+    def __init__(self, out_channels, zdim=128): # la dimensión del vector z siempre es 128 a la entrada
         super().__init__()
         # gamma y beta para la film son capas nn.linear. mirar repo cyolo paper para dimensiones.
         self.gamma = torch.nn.Linear(zdim, out_channels)
@@ -139,3 +140,4 @@ class DownscaleBlock(torch.nn.Module):
 class cyoloSCF(torch.nn.Module):
     def __init__(self):
         super().__init__()
+        self.audio_encoder = CRNNSpectrogram()
