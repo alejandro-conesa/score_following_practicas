@@ -14,3 +14,4 @@ data/*
 pyproject.toml
 plantilla.slurm
 servidor.txt
+.DS_Store
