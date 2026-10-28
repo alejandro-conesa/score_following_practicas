@@ -86,30 +86,29 @@ class BottleneckBlock(torch.nn.Module):
         out += identity
         out = self.activation(out)
         return out
-        
 
+        
 class UpscaleBlock(torch.nn.Module):
-    def __init__(self, in_channels, out_channels, out_dim, film_active=False):
+    def __init__(self, in_channels, out_channels, res_channels, out_dim, film_active=False):
         super().__init__()
+        # conv + norm + film se aplican a la resolución de ENTRADA (out_dim // 2)
         self.conv = torch.nn.Conv2d(in_channels, out_channels, kernel_size=3, padding=1, stride=1)
-        self.ln = torch.nn.LayerNorm([out_channels, out_dim, out_dim])
+        self.ln = torch.nn.LayerNorm([out_channels, out_dim // 2, out_dim // 2])
         self.activation = torch.nn.ELU(inplace=True)
         self.upsample = torch.nn.Upsample(scale_factor=2, mode="nearest")
-        self.bottleneck = BottleneckBlock(in_channels*2, out_channels, out_dim=out_dim)
+        # el bottleneck trabaja a out_dim y recibe out_channels + res_channels
+        self.bottleneck = BottleneckBlock(out_channels + res_channels, out_channels, out_dim=out_dim)
 
-        if film_active:
-            self.film = FiLM(out_channels, out_channels)
-        else:
-            self.film = None
+        self.film = FiLM(out_channels, out_channels) if film_active else None
 
     def forward(self, x, z=None, res=None):
         x = self.conv(x)
         x = self.ln(x)
-        if self.film:
+        if self.film is not None:
             x = self.film(x, z)
         x = self.activation(x)
-        if res is not None:
-            x = torch.cat((x, res), dim=1)
+        x = self.upsample(x)                 # <- faltaba
+        x = torch.cat((x, res), dim=1)
         x = self.bottleneck(x)
         return x
 
@@ -138,6 +137,32 @@ class DownscaleBlock(torch.nn.Module):
 
 
 class cyoloSCF(torch.nn.Module):
-    def __init__(self):
+    def __init__(self, film=False):
         super().__init__()
-        self.audio_encoder = CRNNSpectrogram()
+        # self.audio_encoder = CRNNSpectrogram()
+        self.focus = FocusBlock(1, 16) #208x208
+        self.downscale1 = DownscaleBlock(16, 32, 104) #104x104
+        self.downscale2 = DownscaleBlock(32, 64, 52) #52x52
+        self.downscale_film_1 = DownscaleBlock(64, 128, 26, film) #26x26
+        self.downscale_film_2 = DownscaleBlock(128, 128, 13, film) #13x13
+        self.upscale1 = UpscaleBlock(128, 128, res_channels=128, out_dim=26, film_active=film)  # skip = x_4 (128 ch)
+        self.upscale2 = UpscaleBlock(128, 128, res_channels=64,  out_dim=52, film_active=film)  # skip = x_3 (64 ch)
+
+    def forward(self, x, z):
+        # if z is not None:
+        #     z = self.audio_encoder(z)
+
+        x = self.focus(x)
+        x = self.downscale1(x)
+        x = self.downscale2(x)
+        x_3 = x.clone()
+        x = self.downscale_film_1(x, z)
+        x_4 = x.clone()
+        x = self.downscale_film_2(x, z)
+        x = self.upscale1(x, z=z, res=x_4)
+        x = self.upscale2(x, z=z, res=x_3)
+
+        return x
+
+
+
